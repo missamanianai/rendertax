@@ -2,18 +2,15 @@ import type React from "react"
 import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import "./globals.css"
-import { SessionProvider } from "@/components/auth/session-provider"
-import { Header } from "@/components/header"
 import { ThemeProvider } from "@/components/theme-provider"
+import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar"
+import { AppSidebar } from "@/components/navigation/app-sidebar"
 
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: {
-    default: "Render Tax",
-    template: "%s | Render Tax",
-  },
-  description: "Automated Tax Refund Recovery through IRS transcript analysis",
+  title: "Render Tax Analysis Engine",
+  description: "Advanced tax analysis and optimization platform",
     generator: 'v0.dev'
 }
 
@@ -25,14 +22,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={inter.className}>
-        <SessionProvider>
-          <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-            <div className="flex min-h-screen flex-col">
-              <Header />
-              <main className="flex-1">{children}</main>
-            </div>
-          </ThemeProvider>
-        </SessionProvider>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
+          <SidebarProvider>
+            <AppSidebar />
+            <SidebarInset>
+              <main className="min-h-screen">{children}</main>
+            </SidebarInset>
+          </SidebarProvider>
+        </ThemeProvider>
       </body>
     </html>
   )
