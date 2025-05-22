@@ -1,0 +1,138 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  firstName    String
+  lastName     String
+  role         String   // "tax_professional" or "individual"
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  sessions     Session[]
+  accounts     Account[]
+  analysisSessions AnalysisSession[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// New models for Render Tax functionality
+
+model AnalysisSession {
+  id               String   @id @default(cuid())
+  userId           String
+  clientFirstName  String?
+  clientLastName   String?
+  clientDateOfBirth DateTime?
+  maritalStatus    String?  // "single", "married_filing_jointly", "married_filing_separately", "head_of_household"
+  status           String   @default("pending") // "pending", "processing", "completed", "failed"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  user             User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  transcriptFiles  TranscriptFile[]
+  dependents       Dependent[]
+  analysisResults  AnalysisResult[]
+}
+
+model Dependent {
+  id               String   @id @default(cuid())
+  analysisSessionId String
+  firstName        String
+  lastName         String
+  dateOfBirth      DateTime
+  
+  analysisSession  AnalysisSession @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
+}
+
+model TranscriptFile {
+  id               String   @id @default(cuid())
+  analysisSessionId String
+  fileName         String
+  fileUrl          String   // Blob URL
+  fileSize         Int
+  transcriptType   String   // "wage_income", "record_account", "account_transcript", "unknown"
+  taxYear          Int?
+  processingStatus String   @default("pending") // "pending", "processing", "processed", "error"
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  analysisSession  AnalysisSession @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
+  validationErrors ValidationError[]
+  validationWarnings ValidationWarning[]
+}
+
+model ValidationError {
+  id               String   @id @default(cuid())
+  transcriptFileId String
+  type             String   // "ssn_mismatch", "blank_document", "file_corruption", "redacted_document", "unknown"
+  message          String
+  
+  transcriptFile   TranscriptFile @relation(fields: [transcriptFileId], references: [id], onDelete: Cascade)
+}
+
+model ValidationWarning {
+  id               String   @id @default(cuid())
+  transcriptFileId String
+  type             String   // "name_mismatch", "unknown"
+  message          String
+  
+  transcriptFile   TranscriptFile @relation(fields: [transcriptFileId], references: [id], onDelete: Cascade)
+}
+
+model AnalysisResult {
+  id               String   @id @default(cuid())
+  analysisSessionId String
+  taxYear          Int
+  issueType        String   // "discrepancy", "event", "none"
+  description      String
+  potentialImpact  Float
+  actionRequired   String
+  confidence       String   // "high", "medium", "low"
+  createdAt        DateTime @default(now())
+  
+  analysisSession  AnalysisSession @relation(fields: [analysisSessionId], references: [id], onDelete: Cascade)
+}
