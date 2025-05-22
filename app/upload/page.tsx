@@ -1,4 +1,7 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { getServerSession } from "next-auth"
+import { authOptions } from "@/lib/auth"
 import FileUploadForm from "@/components/file-upload-form"
 
 export const metadata: Metadata = {
@@ -6,7 +9,13 @@ export const metadata: Metadata = {
   description: "Upload IRS transcripts for analysis and refund recovery",
 }
 
-export default function UploadPage() {
+export default async function UploadPage() {
+  const session = await getServerSession(authOptions)
+
+  if (!session) {
+    redirect("/login?callbackUrl=/upload")
+  }
+
   return (
     <div className="container max-w-5xl py-10">
       <div className="mb-8">

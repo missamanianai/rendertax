@@ -1,9 +1,8 @@
 "use client"
 
 import Link from "next/link"
-
-import { useState, useEffect } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { signIn } from "next-auth/react"
 import { z } from "zod"
 import { useForm } from "react-hook-form"
@@ -30,27 +29,24 @@ type LoginFormValues = z.infer<typeof loginSchema>
 interface LoginFormProps {
   registered?: boolean
   error?: string
+  timeout?: boolean
 }
 
-export function LoginForm({ registered, error }: LoginFormProps) {
+export function LoginForm({ registered, error, timeout }: LoginFormProps) {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [showPassword, setShowPassword] = useState(false)
-  const [authError, setAuthError] = useState<string | null>(null)
-  const [success, setSuccess] = useState<string | null>(null)
-
-  // Get callbackUrl from search params
-  const callbackUrl = searchParams.get("callbackUrl") || "/dashboard"
-
-  useEffect(() => {
-    if (registered) {
-      setSuccess("Account created successfully. You can now log in.")
-    }
-
-    if (error) {
-      setAuthError(decodeURIComponent(error))
-    }
-  }, [registered, error])
+  const [authError, setAuthError] = useState<string | null>(
+    registered
+      ? null
+      : timeout
+        ? "Your session has expired due to inactivity. Please log in again."
+        : error
+          ? decodeURIComponent(error)
+          : null,
+  )
+  const [success, setSuccess] = useState<string | null>(
+    registered ? "Account created successfully. You can now log in." : null,
+  )
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -71,7 +67,6 @@ export function LoginForm({ registered, error }: LoginFormProps) {
         email: values.email,
         password: values.password,
         redirect: false,
-        callbackUrl,
       })
 
       if (result?.error) {
@@ -79,8 +74,7 @@ export function LoginForm({ registered, error }: LoginFormProps) {
         return
       }
 
-      // NextAuth will handle the redirect to callbackUrl
-      router.push(callbackUrl)
+      router.push("/dashboard")
       router.refresh()
     } catch (err) {
       console.error("Login error:", err)

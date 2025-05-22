@@ -1,6 +1,6 @@
 "use server"
 
-import { hash } from "bcrypt"
+import { hash } from "bcryptjs"
 import { revalidatePath } from "next/cache"
 import prisma from "@/lib/prisma"
 
