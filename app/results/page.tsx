@@ -23,34 +23,14 @@ export default async function ResultsPage({
     redirect("/analysis")
   }
 
-  // Get analysis session
-  let analysisSession = null
-
-  try {
-    // Import prisma dynamically to avoid issues during build time
-    const { prisma } = await import("@/lib/prisma")
-
-    analysisSession = await prisma.analysisSession.findUnique({
-      where: {
-        id: sessionId,
-        userId: session.user.id,
-      },
-      include: {
-        transcriptData: true,
-      },
-    })
-  } catch (error) {
-    console.error("Error fetching analysis session:", error)
+  // Demo data instead of fetching from Prisma
+  const demoSession = {
+    id: sessionId,
+    taxYear: sessionId === "demo-1" ? 2023 : 2022,
+    transcriptType: sessionId === "demo-1" ? "wage_income" : "account_transcript",
+    status: sessionId === "demo-1" ? "completed" : "processing",
+    createdAt: new Date().toISOString(),
   }
-
-  if (!analysisSession) {
-    redirect("/analysis")
-  }
-
-  // Parse the transcript data
-  const parsedData = analysisSession.transcriptData?.parsedData
-    ? JSON.parse(analysisSession.transcriptData.parsedData as string)
-    : null
 
   return (
     <div className="container py-8">
@@ -63,13 +43,13 @@ export default async function ResultsPage({
 
       <Card className="mb-6">
         <CardHeader>
-          <CardTitle>Tax Year {analysisSession.taxYear}</CardTitle>
+          <CardTitle>Tax Year {demoSession.taxYear}</CardTitle>
           <CardDescription>
-            {analysisSession.transcriptType === "wage_income"
+            {demoSession.transcriptType === "wage_income"
               ? "Wage and Income Transcript"
-              : analysisSession.transcriptType === "account_transcript"
+              : demoSession.transcriptType === "account_transcript"
                 ? "Account Transcript"
-                : analysisSession.transcriptType === "record_account"
+                : demoSession.transcriptType === "record_account"
                   ? "Record of Account Transcript"
                   : "IRS Transcript"}
           </CardDescription>
@@ -79,9 +59,9 @@ export default async function ResultsPage({
             <div>
               <p className="text-sm font-medium">Status</p>
               <p className="text-sm">
-                {analysisSession.status === "processing" ? (
+                {demoSession.status === "processing" ? (
                   <span className="text-yellow-500">Processing</span>
-                ) : analysisSession.status === "completed" ? (
+                ) : demoSession.status === "completed" ? (
                   <span className="text-green-500">Completed</span>
                 ) : (
                   <span className="text-red-500">Error</span>
@@ -90,7 +70,7 @@ export default async function ResultsPage({
             </div>
             <div>
               <p className="text-sm font-medium">Created</p>
-              <p className="text-sm">{new Date(analysisSession.createdAt).toLocaleDateString()}</p>
+              <p className="text-sm">{new Date(demoSession.createdAt).toLocaleDateString()}</p>
             </div>
           </div>
         </CardContent>
@@ -112,7 +92,7 @@ export default async function ResultsPage({
             <CardContent>
               <div className="space-y-4">
                 <p>Analysis results will appear here once processing is complete.</p>
-                {analysisSession.status === "processing" && (
+                {demoSession.status === "processing" && (
                   <div className="text-center py-4">
                     <p className="text-muted-foreground">Analysis in progress...</p>
                   </div>

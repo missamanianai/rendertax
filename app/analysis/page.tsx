@@ -12,84 +12,77 @@ export default async function AnalysisPage() {
     redirect("/login")
   }
 
-  // We'll use a try-catch block to handle any database connection issues
-  let analysisSessions = []
-
-  try {
-    // Import prisma dynamically to avoid issues during build time
-    const { prisma } = await import("@/lib/prisma")
-
-    // Get user's analysis sessions
-    analysisSessions = await prisma.analysisSession.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    })
-  } catch (error) {
-    console.error("Error fetching analysis sessions:", error)
-    // Continue with empty sessions array
-  }
+  // Instead of fetching from Prisma, we'll use demo data
+  const demoSessions = [
+    {
+      id: "demo-1",
+      taxYear: 2023,
+      transcriptType: "wage_income",
+      status: "completed",
+      createdAt: new Date().toISOString(),
+    },
+    {
+      id: "demo-2",
+      taxYear: 2022,
+      transcriptType: "account_transcript",
+      status: "processing",
+      createdAt: new Date(Date.now() - 86400000).toISOString(), // Yesterday
+    },
+  ]
 
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-6">Analysis</h1>
 
-      {analysisSessions.length === 0 ? (
-        <div className="text-center py-12">
-          <h2 className="text-2xl font-semibold mb-4">No Analysis Sessions Found</h2>
-          <p className="text-muted-foreground mb-6">Upload IRS transcripts to begin analyzing your tax data</p>
+      <div className="grid gap-6">
+        {demoSessions.map((session) => (
+          <Card key={session.id}>
+            <CardHeader>
+              <CardTitle>Tax Year {session.taxYear}</CardTitle>
+              <CardDescription>
+                {session.transcriptType === "wage_income"
+                  ? "Wage and Income Transcript"
+                  : session.transcriptType === "account_transcript"
+                    ? "Account Transcript"
+                    : session.transcriptType === "record_account"
+                      ? "Record of Account Transcript"
+                      : "IRS Transcript"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm font-medium">Status</p>
+                  <p className="text-sm">
+                    {session.status === "processing" ? (
+                      <span className="text-yellow-500">Processing</span>
+                    ) : session.status === "completed" ? (
+                      <span className="text-green-500">Completed</span>
+                    ) : (
+                      <span className="text-red-500">Error</span>
+                    )}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm font-medium">Created</p>
+                  <p className="text-sm">{new Date(session.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+            </CardContent>
+            <CardFooter>
+              <Button asChild>
+                <Link href={`/results?sessionId=${session.id}`}>View Results</Link>
+              </Button>
+            </CardFooter>
+          </Card>
+        ))}
+
+        <div className="text-center py-6">
           <Button asChild>
-            <Link href="/upload">Upload Documents</Link>
+            <Link href="/upload">Upload New Document</Link>
           </Button>
         </div>
-      ) : (
-        <div className="grid gap-6">
-          {analysisSessions.map((session) => (
-            <Card key={session.id}>
-              <CardHeader>
-                <CardTitle>Tax Year {session.taxYear}</CardTitle>
-                <CardDescription>
-                  {session.transcriptType === "wage_income"
-                    ? "Wage and Income Transcript"
-                    : session.transcriptType === "account_transcript"
-                      ? "Account Transcript"
-                      : session.transcriptType === "record_account"
-                        ? "Record of Account Transcript"
-                        : "IRS Transcript"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm font-medium">Status</p>
-                    <p className="text-sm">
-                      {session.status === "processing" ? (
-                        <span className="text-yellow-500">Processing</span>
-                      ) : session.status === "completed" ? (
-                        <span className="text-green-500">Completed</span>
-                      ) : (
-                        <span className="text-red-500">Error</span>
-                      )}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">Created</p>
-                    <p className="text-sm">{new Date(session.createdAt).toLocaleDateString()}</p>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button asChild>
-                  <Link href={`/results?sessionId=${session.id}`}>View Results</Link>
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
-      )}
+      </div>
     </div>
   )
 }

@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { registerUser } from "@/lib/actions/auth-actions"
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -33,13 +32,9 @@ export function RegisterForm() {
     try {
       const result = registerSchema.parse({ name, email, password })
 
-      const response = await registerUser(result)
-
-      if (response.error) {
-        setError(response.error)
-        setIsLoading(false)
-        return
-      }
+      // In a real implementation, this would call a server action to register the user
+      // For demo purposes, we'll just simulate success
+      await new Promise((resolve) => setTimeout(resolve, 1000))
 
       router.push("/login?registered=true")
     } catch (error) {
