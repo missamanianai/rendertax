@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 
@@ -13,15 +12,26 @@ export default async function AnalysisPage() {
     redirect("/login")
   }
 
-  // Get user's analysis sessions
-  const analysisSessions = await prisma.analysisSession.findMany({
-    where: {
-      userId: session.user.id,
-    },
-    orderBy: {
-      createdAt: "desc",
-    },
-  })
+  // We'll use a try-catch block to handle any database connection issues
+  let analysisSessions = []
+
+  try {
+    // Import prisma dynamically to avoid issues during build time
+    const { prisma } = await import("@/lib/prisma")
+
+    // Get user's analysis sessions
+    analysisSessions = await prisma.analysisSession.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    })
+  } catch (error) {
+    console.error("Error fetching analysis sessions:", error)
+    // Continue with empty sessions array
+  }
 
   return (
     <div className="container py-8">

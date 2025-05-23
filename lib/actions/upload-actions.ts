@@ -2,7 +2,6 @@
 
 import { getServerSession } from "next-auth"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { PDFTranscriptParser } from "@/lib/analysis/pdf-parser"
 
 export async function uploadTranscript(formData: FormData) {
@@ -28,6 +27,9 @@ export async function uploadTranscript(formData: FormData) {
 
     // Parse the transcript
     const parsedData = await PDFTranscriptParser.parseTranscript(buffer)
+
+    // Import prisma dynamically to avoid issues during build time
+    const { prisma } = await import("@/lib/prisma")
 
     // Create analysis session
     const analysisSession = await prisma.analysisSession.create({

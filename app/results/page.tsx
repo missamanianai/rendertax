@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { authOptions } from "@/lib/auth"
-import { prisma } from "@/lib/prisma"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -25,15 +24,24 @@ export default async function ResultsPage({
   }
 
   // Get analysis session
-  const analysisSession = await prisma.analysisSession.findUnique({
-    where: {
-      id: sessionId,
-      userId: session.user.id,
-    },
-    include: {
-      transcriptData: true,
-    },
-  })
+  let analysisSession = null
+
+  try {
+    // Import prisma dynamically to avoid issues during build time
+    const { prisma } = await import("@/lib/prisma")
+
+    analysisSession = await prisma.analysisSession.findUnique({
+      where: {
+        id: sessionId,
+        userId: session.user.id,
+      },
+      include: {
+        transcriptData: true,
+      },
+    })
+  } catch (error) {
+    console.error("Error fetching analysis session:", error)
+  }
 
   if (!analysisSession) {
     redirect("/analysis")
